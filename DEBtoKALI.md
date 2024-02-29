@@ -24,6 +24,10 @@ Consider sizing [Costs](./COSTS.md)
 
 ## Enable Boot Diagnostics
 
+```
+ az vm boot-diagnostics enable --resource-group PLW-AZURE --name plw-kali
+ ```
+
 In Azure portal under "Help" you can enable boot diagnostics. This will help troubleshoot why an image is not rebooting.
 
 ![Boot Diagnostics](./img/bootdiag.png)
@@ -161,6 +165,8 @@ Now install Kali as root
 DEBIAN_FRONTEND="noninteractive" apt-get install kali-linux-default -y 
 ```
 
+This took about 33 minutes on a Standard_D2a_v4 instance.
+
 ### Reboot
 
 ```reboot ```
@@ -174,6 +180,47 @@ msfconsole
 ![msfconsole](./img/msfconsole.png)
 
 
+## Install VNC Remote Access
+
+```
+sudo apt update && sudo apt install -y kali-desktop-xfce
+
+sudo update-alternatives --config x-session-manager
+
+vncserver -geometry 4096x2160 -geometry 1920x1080 -geometry 1280x1024
+```
+
+Set a strong password, but don't expose it to the Internet. You'll use an SSH tunnel to get there:
+
+```
+ssh -i ~/.ssh/id_rsa kali@<remoteip> -L 5901:localhost:5901
+```
+
+My Kali host local to my home has xtightvnc installed already
+
+```
+sudo apt install xtightvncviewer
+xtightvncviewer
+```
+
+A tiny window will pop open and you can connect to localhost:590x (where x is the vnc terminal e.g. :1, :2)
+
+![VNC](./img/vnc.png)
+
+
+Now you have a Remote GUI to a high-speed connection on a VM instance with performance you can tweak, just by resizing it!
+
+![VNC](./img/xtightvnc.png)
+
+
+## Cleanup
+
+Remember to detatch / Delete instances so you won't get billed excessively 
+
+```
+az vm delete --resource-group PLW-AZURE --name plw-kali
+az network public-ip delete --name plw-kaliPublicIP --resource-group PLW-AZURE 
+```
 
 # Notes
 
