@@ -1,15 +1,26 @@
 # Create Kali box from Debian Azure Image
 
 ## Create VM
-First create a VM instance with image parameters:
+First [create](./AZURECLI.md#create-vm-resources) a VM instance with image parameters:
+
 
 ```
+--name plw-kali \
 --image Debian11 \
 --size Standard_DS1_v2 \
+--admin-username kali 
 ```
 
-Consider sizing costs
-![Costs](./COSTS.md)
+Other sizes
+```
+az vm list-sizes  --location westus3 | grep D2
+...
+4                   4096          Standard_D2lds_v5          2                1047552           76800
+4                   8192          Standard_D2a_v4            2                1047552           51200
+4                   8192          Standard_D2as_v4           2                1047552           16384
+```
+
+Consider sizing [Costs](./COSTS.md)
 
 ## Enable Boot Diagnostics
 
@@ -29,6 +40,12 @@ and screenshots of the boot screen.
 
 ![Boot Screen](./img/bootscreen.png)
 
+## Login to host
+```
+az ssh vm --resource-group PLW-AZURE --name plw-kali --local-user kali --private-key-file <path>
+```
+
+
 ## Download Kali Keys
 wget and screen are already installed with Azure Debian11 image. 
 
@@ -41,9 +58,10 @@ sudo cp archive-key.asc /etc/apt/trusted.gpg.d/
 
 ## Update Kali Packages
 
-As root update package list
+As root, update package list
 
 ```
+sudo su -
 echo "deb http://http.kali.org/kali kali-rolling main contrib non-free" >> /etc/apt/sources.list
 apt-get  update -y 
 ```
@@ -55,7 +73,7 @@ apt-get  update -y
 debconf-utils provides the `debconf-get-selections` cli
 
 ``` 
-sudo apt install debconf-utils 
+sudo apt install debconf-utils -y
 ```
 
 ### Prepare Unattended Config for python3-venv
@@ -70,6 +88,7 @@ A libc6 dialog prompts for restart of services.
 ![libc:amd](./img/libc.png)
 
 Adjust Debconf settings and use configuration parameters to avoid interactive restart and confirmation dialogs.  
+
 ```
 echo 'libc6 libraries/restart-without-asking boolean true' | sudo debconf-set-selections
 ```
@@ -134,12 +153,9 @@ sudo debconf-set-selections < selections.conf
 I like to use python virtual-env (Force old SSH config to stay):
 ```
 DEBIAN_FRONTEND="noninteractive" apt-get install -o Dpkg::Options::="--force-confold" python3-venv -y 
-
 ```
 
 ## Install Kali
-
-
 Now install Kali as root
 ```
 DEBIAN_FRONTEND="noninteractive" apt-get install kali-linux-default -y 
