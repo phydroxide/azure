@@ -151,7 +151,10 @@ DEBIAN_FRONTEND="noninteractive" apt-get install kali-linux-default -y
 
 ### Test msfconsole
 
-``` msfconsole ```
+``` 
+msfconsole 
+```
+
 ![msfconsole](./img/msfconsole.png)
 
 
@@ -166,7 +169,6 @@ An Error occurs if you try to install kali-linux-everything
 
 The image stalls out if you reboot. 
 
-![Boot Screen](./img/)
 I followed a recommendation to change grub settings.
 
 
@@ -176,6 +178,7 @@ GRUB_TIMEOUT=0
 sudo update-grub 
 ```
 
+Determine Serial port (This was already fine)
 
 ```
 ps aux | grep ttyS0
@@ -183,7 +186,7 @@ ps aux | grep ttyS0
 /sbin/agetty -o -p -- \u --keep-baud 115200,57600,38400,9600 ttyS0 vt220
 ```
 
-
+```
 GRUB_DEFAULT=0
 GRUB_TIMEOUT=0
 GRUB_DISTRIBUTOR=`lsb_release -i -s 2> /dev/null || echo Debian`
@@ -191,6 +194,17 @@ GRUB_CMDLINE_LINUX_DEFAULT="quiet splash acpi=off"
 GRUB_CMDLINE_LINUX="console=tty0 console=ttyS0,115200 earlyprintk=ttyS0,115200 consoleblank=0"
 GRUB_TERMINAL="console serial"
 GRUB_SERIAL_COMMAND="serial --speed=115200"
+```
 
+```
 apt-get install grub-emu
-+GRUB_TERMINAL_OUTPUT="gfxterm serial"
+```
+
+```
+GRUB_TERMINAL_OUTPUT="gfxterm serial"
+sudo update-grub 
+```
+
+
+Ultimately it isn't booting because the boot image isn't signed. #TODO
+![Boot Screen](./img/secureboot.bmp)
