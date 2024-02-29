@@ -1,5 +1,6 @@
 # Create Kali box from Debian Azure Image
 
+## Create VM
 First create a VM instance with image parameters:
 
 ```
@@ -7,22 +8,57 @@ First create a VM instance with image parameters:
 --size Standard_DS1_v2 \
 ```
 
+Consider sizing costs
+![Costs](./COSTS.md)
+
+## Enable Boot Diagnostics
+
+In Azure portal under "Help" you can enable boot diagnostics. This will help troubleshoot why an image is not rebooting.
+
+![Boot Diagnostics](./img/bootdiag.png)
+
+You'll need to enable a managed storage account.
+
+![Storage](./img/bootdiag_storage.png)
+
+This will capture serial logs
+
+![Serial Log](./img/seriallog.png)
+
+and screenshots of the boot screen.
+
+![Boot Screen](./img/bootscreen.png)
+
+## Download Kali Keys
 wget and screen are already installed with Azure Debian11 image. 
 
-Download Kali keys.
+Download Kali package distribution key.
 
 ```
 wget https://archive.kali.org/archive-key.asc
 sudo cp archive-key.asc /etc/apt/trusted.gpg.d/
 ```
 
-Then as root update package list
+## Update Kali Packages
+
+As root update package list
 
 ```
 echo "deb http://http.kali.org/kali kali-rolling main contrib non-free" >> /etc/apt/sources.list
 apt-get  update -y 
 ```
 
+
+## Prepare to Install Unattended
+
+### Install debconf-utils
+debconf-utils provides the `debconf-get-selections` cli
+
+``` 
+sudo apt install debconf-utils 
+```
+
+### Prepare Unattended Config for python3-venv
 
 Chrony and ssh launch dialogs prompt to keep current configuration. 
 ![Chrony](./img/chrony.png)
@@ -31,22 +67,130 @@ Chrony and ssh launch dialogs prompt to keep current configuration.
 
 A libc6 dialog prompts for restart of services. 
 
+![libc:amd](./img/libc.png)
+
 Adjust Debconf settings and use configuration parameters to avoid interactive restart and confirmation dialogs.  
 ```
 echo 'libc6 libraries/restart-without-asking boolean true' | sudo debconf-set-selections
 ```
 
+### Prepare Unattended Config for kali-linux-default
+
+Kali installation launches a number of dialogs that we should select options for to not be disrupted during an unattended installation.
+
+![keyboard-configuration](./img/Keyboard.png)
+
+```
+echo 'keyboard-configuration  keyboard-configuration/variant  select  English (US)' >> selections.conf 
+```
+
+![console-setup](./img/console-setup.png)
+
+
+```
+echo 'console-setup   console-setup/codeset47 select  Guess optimal character set' >> selections.conf
+```
+
+
+![machchanger](./img/macchanger.png)
+
+```
+echo 'macchanger      macchanger/automatically_run    boolean true' >> selections.conf
+```
+
+![kismet-capture-common](./img/kismet.png)
+
+```
+echo 'kismet-capture-common   kismet-capture-common/install-setuid    boolean true' >> selections.conf
+```
+
+
+![kismet-capture-common users](./img/azurekismet.png)
+
+```
+echo 'kismet-capture-common   kismet-capture-common/install-users     string  azureuser' >> selections.conf
+```
+
+![wireshark-common](./img/wireshark.png)
+
+
+```
+echo 'wireshark-common        wireshark-common/install-setuid boolean true' >> selections.conf
+```
+
+
+![sslh configuration](./img/sslh.png)
+
+echo 'sslh    sslh/inetd_or_standalone        select  standalone' >> selections.conf
+
+```
+sudo debconf-set-selections < selections.conf
+```
+
+
+
+## Install Python Virtual Environment for Development
+
 I like to use python virtual-env (Force old SSH config to stay):
 ```
-DEBIAN_FRONTEND="noninteractive" UCF_FORCE_CONFOLD=1  apt-get install -o Dpkg::Options::="--force-confold" python3-venv -y 
+DEBIAN_FRONTEND="noninteractive" apt-get install -o Dpkg::Options::="--force-confold" python3-venv -y 
 
 ```
 
-Now install Kali
+## Install Kali
+
+
+Now install Kali as root
 ```
-sudo apt-get install kali-linux-everything -y 
+DEBIAN_FRONTEND="noninteractive" apt-get install kali-linux-default -y 
 ```
-Error
+
+### Reboot
+
+```reboot ```
+
+### Test msfconsole
+
+``` msfconsole ```
+![msfconsole](./img/msfconsole.png)
+
+
+
+# Notes
+
+An Error occurs if you try to install kali-linux-everything
 ```firmware-misc-nonfree but it is not installable```
 
 ```apt-get upgrade```
+
+
+The image stalls out if you reboot. 
+
+![Boot Screen](./img/)
+I followed a recommendation to change grub settings.
+
+
+```
+sudo gedit /etc/default/grub
+GRUB_TIMEOUT=0
+sudo update-grub 
+```
+
+
+```
+ps aux | grep ttyS0
+
+/sbin/agetty -o -p -- \u --keep-baud 115200,57600,38400,9600 ttyS0 vt220
+```
+
+
+GRUB_DEFAULT=0
+GRUB_TIMEOUT=0
+GRUB_DISTRIBUTOR=`lsb_release -i -s 2> /dev/null || echo Debian`
+GRUB_CMDLINE_LINUX_DEFAULT="quiet splash acpi=off"
+GRUB_CMDLINE_LINUX="console=tty0 console=ttyS0,115200 earlyprintk=ttyS0,115200 consoleblank=0"
+GRUB_TERMINAL="console serial"
+GRUB_SERIAL_COMMAND="serial --speed=115200"
+
+apt-get install grub-emu
++GRUB_TERMINAL_OUTPUT="gfxterm serial"

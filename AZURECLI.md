@@ -46,6 +46,8 @@ az vm  create --location westus3 \
 `az vm create` will create network resources automatically. Or specify network resources with --vnet-name
 
 
+We're going to install Kali and will need to disable secure boot for now so the image will boot. 
+
 ```
 az vm  create --location westus3 \
                 --name plw-cli-vm \
@@ -58,7 +60,7 @@ az vm  create --location westus3 \
                 --enable-hibernation false \
                 --admin-username azureuser \
                 --security-type TrustedLaunch \
-                --enable-secure-boot true \
+                --enable-secure-boot false \
                 --enable-vtpm true \
                 --authentication-type ssh \
                 --os-disk-delete-option Delete \
