@@ -42,6 +42,12 @@ az vm  create --location westus3 \
                          --image Debian11 --size Standard_DS1_v2 \
                          --ssh-key-values /root/id_rsa.pub 
 ```
+
+`az vm create` will create network resources automatically. Or specify network resources with --vnet-name
+
+
+We're going to install Kali and will need to disable secure boot for now so the image will boot. 
+
 ```
 az vm  create --location westus3 \
                 --name plw-cli-vm \
@@ -50,12 +56,22 @@ az vm  create --location westus3 \
                 --size Standard_DS1_v2 \
                 --ssh-key-values /root/id_rsa.pub \
                 --accelerated-networking false \
-                --nic-delete-option Detach \
+                --nic-delete-option Delete \
                 --enable-hibernation false \
                 --admin-username azureuser \
                 --security-type TrustedLaunch \
-                --enable-secure-boot true \
-                --enable-vtpm true         
+                --enable-secure-boot false \
+                --enable-vtpm true \
+                --authentication-type ssh \
+                --os-disk-delete-option Delete \
+                --patch-mode ImageDefault \
+                --vnet-name plw-vm-vnet \
+                --subnet default \
+                --public-ip-address-allocation static \
+                --priority Spot \
+                --max-price 5 \
+                --eviction-policy Deallocate 
+
 ```
 TODO - `-zone 1` PublicIP has an existing availability zone constraint NoZone and the request has availability zone constraint 1, which do not match
 
