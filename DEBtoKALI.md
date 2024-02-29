@@ -161,7 +161,7 @@ msfconsole
 
 # Notes
 
-An Error occurs if you try to install kali-linux-everything
+An Error occurs if you try to install kali-linux-everything: 
 ```firmware-misc-nonfree but it is not installable```
 
 ```apt-get upgrade```
